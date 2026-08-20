@@ -1,82 +1,101 @@
 extends Node3D
 
-## Main Scene Controller - initializes and connects all game systems
+## Main Scene Controller - creates all game systems in code
 
-@onready var world: Node3D = $World
-@onready var player: CharacterBody3D = $Player
-@onready var camera: Camera3D = $Player/Camera
-@onready var ui: CanvasLayer = $UI
-@onready var game_manager: Node = $GameManager
-@onready var multiplayer_manager: Node = $MultiplayerController
-
-# Scene creation helpers
 func _ready() -> void:
-	# Create child nodes that don't exist in scene file
-	_setup_scene_tree()
-	_connect_signals()
+	_setup_environment()
+	_setup_world()
+	_setup_player()
+	_setup_ui()
+	_setup_game_manager()
+	_setup_multiplayer()
 	_setup_updater()
 	_start_game()
 
-func _setup_scene_tree() -> void:
-	# World node
-	if not world:
-		world = Node3D.new()
-		world.name = "World"
-		world.set_script(load("res://scripts/world.gd"))
-		add_child(world)
+func _setup_environment() -> void:
+	# World environment
+	var world_env := WorldEnvironment.new()
+	world_env.name = "WorldEnvironment"
+	add_child(world_env)
 
-	# Player
-	if not player:
-		player = CharacterBody3D.new()
-		player.name = "Player"
-		player.position = Vector3(0, 0.5, 0)
-		player.set_script(load("res://scripts/player.gd"))
-		add_child(player)
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.75, 0.85, 1.0, 1)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.9, 0.85, 0.8, 1)
+	env.ambient_light_energy = 0.6
+	env.tonemap_mode = Environment.TONE_MAP_ACES
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.8, 0.9, 1.0, 1)
+	env.fog_density = 0.003
+	world_env.environment = env
 
-		# Camera
-		camera = Camera3D.new()
-		camera.name = "Camera"
-		camera.position = Vector3(0, 4, 6)
-		camera.rotation.x = deg_to_rad(-35)
-		camera.set_script(load("res://scripts/camera_controller.gd"))
-		player.add_child(camera)
+	# Directional light
+	var light := DirectionalLight3D.new()
+	light.name = "Sun"
+	light.rotation_degrees = Vector3(-45, 30, 0)
+	light.light_color = Color(1.0, 0.95, 0.85, 1)
+	light.light_energy = 1.2
+	light.shadow_enabled = true
+	light.directional_shadow_max_distance = 80.0
+	add_child(light)
 
-	# UI
-	if not ui:
-		ui = CanvasLayer.new()
-		ui.name = "UI"
-		ui.set_script(load("res://scripts/ui.gd"))
-		add_child(ui)
+func _setup_world() -> void:
+	var world := Node3D.new()
+	world.name = "World"
+	world.set_script(load("res://scripts/world.gd"))
+	add_child(world)
 
-	# Game Manager
-	if not game_manager:
-		game_manager = Node.new()
-		game_manager.name = "GameManager"
-		game_manager.set_script(load("res://scripts/game_manager.gd"))
-		add_child(game_manager)
+func _setup_player() -> void:
+	var player := CharacterBody3D.new()
+	player.name = "Player"
+	player.position = Vector3(0, 0.5, 0)
 
-	# Multiplayer Manager
-	if not multiplayer_manager:
-		multiplayer_manager = Node.new()
-		multiplayer_manager.name = "MultiplayerController"
-		multiplayer_manager.set_script(load("res://scripts/multiplayer_manager.gd"))
-		add_child(multiplayer_manager)
+	# Collision
+	var col := CollisionShape3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = 0.35
+	shape.height = 1.2
+	col.shape = shape
+	player.add_child(col)
 
-func _connect_signals() -> void:
-	# Connect multiplayer signals
-	if multiplayer_manager:
-		multiplayer_manager.player_connected.connect(_on_player_connected)
-		multiplayer_manager.player_disconnected.connect(_on_player_disconnected)
-		multiplayer_manager.connection_succeeded.connect(_on_connection_succeeded)
+	player.set_script(load("res://scripts/player.gd"))
+	add_child(player)
+
+	# Camera
+	var camera := Camera3D.new()
+	camera.name = "Camera"
+	camera.position = Vector3(0, 4, 6)
+	camera.rotation.x = deg_to_rad(-35)
+	camera.fov = 60.0
+	camera.far = 200.0
+	camera.set_script(load("res://scripts/camera_controller.gd"))
+	player.add_child(camera)
+
+func _setup_ui() -> void:
+	var ui := CanvasLayer.new()
+	ui.name = "UI"
+	ui.set_script(load("res://scripts/ui.gd"))
+	add_child(ui)
+
+func _setup_game_manager() -> void:
+	var gm := Node.new()
+	gm.name = "GameManager"
+	gm.set_script(load("res://scripts/game_manager.gd"))
+	add_child(gm)
+
+func _setup_multiplayer() -> void:
+	var mp := Node.new()
+	mp.name = "MultiplayerController"
+	mp.set_script(load("res://scripts/multiplayer_manager.gd"))
+	add_child(mp)
 
 func _setup_updater() -> void:
-	# Create auto-updater
 	var updater := Node.new()
 	updater.name = "AutoUpdater"
 	updater.set_script(load("res://scripts/auto_updater.gd"))
 	add_child(updater)
 
-	# Create update dialog
 	var dialog := CanvasLayer.new()
 	dialog.name = "UpdateDialog"
 	dialog.set_script(load("res://scripts/update_dialog.gd"))
@@ -87,7 +106,7 @@ func _setup_updater() -> void:
 	updater.update_check_failed.connect(_on_update_check_failed)
 
 func _on_update_available(current: String, new_version: String, url: String) -> void:
-	var dialog = get_node_or_null("/root/Main/UpdateDialog")
+	var dialog = get_node_or_null("UpdateDialog")
 	if dialog:
 		dialog.show_update_dialog(current, new_version, url)
 
@@ -99,76 +118,6 @@ func _start_game() -> void:
 	print("🎮 WASD to move, Mouse to look, E to interact, Shift to sprint")
 	print("📋 ESC for menu")
 
-	if ui:
+	var ui = get_node_or_null("UI")
+	if ui and ui.has_method("show_message"):
 		ui.show_message("Welcome to SimsWorld! Use WASD to move.")
-
-## ---- Multiplayer Connection UI ----
-
-func show_connection_dialog(is_hosting: bool) -> void:
-	# Simple connection dialog using input
-	var dialog := AcceptDialog.new()
-	dialog.name = "ConnectionDialog"
-	dialog.title = "Host Game" if is_hosting else "Join Game"
-	dialog.size = Vector2(400, 200)
-
-	var vbox := VBoxContainer.new()
-	dialog.add_child(vbox)
-
-	if is_hosting:
-		var port_input := LineEdit.new()
-		port_input.text = "7777"
-		port_input.placeholder_text = "Port"
-		vbox.add_child(port_input)
-
-		var host_btn := Button.new()
-		host_btn.text = "🖥️ Host Game"
-		host_btn.pressed.connect(func():
-			var port := int(port_input.text) if port_input.text.is_valid_int() else 7777
-			multiplayer_manager.host_game(port)
-			dialog.queue_free()
-		)
-		vbox.add_child(host_btn)
-	else:
-		var ip_input := LineEdit.new()
-		ip_input.text = "127.0.0.1"
-		ip_input.placeholder_text = "Server IP"
-		vbox.add_child(ip_input)
-
-		var port_input := LineEdit.new()
-		port_input.text = "7777"
-		port_input.placeholder_text = "Port"
-		vbox.add_child(port_input)
-
-		var join_btn := Button.new()
-		join_btn.text = "🔌 Join Game"
-		join_btn.pressed.connect(func():
-			multiplayer_manager.join_game(ip_input.text, int(port_input.text))
-			dialog.queue_free()
-		)
-		vbox.add_child(join_btn)
-
-	add_child(dialog)
-	dialog.popup_centered()
-
-## ---- Signal Handlers ----
-
-func _on_player_connected(peer_id: int) -> void:
-	if ui:
-		ui.show_message("Player %d joined!" % peer_id)
-		var mp = get_node_or_null("/root/Main/MultiplayerController")
-		if mp:
-			ui.update_player_list(mp.get_player_list())
-
-func _on_player_disconnected(peer_id: int) -> void:
-	if ui:
-		ui.show_message("Player %d left" % peer_id)
-		var mp = get_node_or_null("/root/Main/MultiplayerController")
-		if mp:
-			ui.update_player_list(mp.get_player_list())
-
-func _on_connection_succeeded() -> void:
-	if ui:
-		ui.show_message("Connected to server!")
-		var mp = get_node_or_null("/root/Main/MultiplayerController")
-		if mp:
-			ui.update_player_list(mp.get_player_list())
