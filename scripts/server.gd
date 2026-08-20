@@ -9,7 +9,7 @@ const MAX_PLAYERS = 32
 var server_peer: ENetMultiplayerPeer
 
 func _init() -> void:
-	print("🖥️ SimsWorld Dedicated Server")
+	print("🖥️ Build Your House Dedicated Server")
 	print("Starting on port ", PORT, "...")
 
 	server_peer = ENetMultiplayerPeer.new()

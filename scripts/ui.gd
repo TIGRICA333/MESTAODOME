@@ -2,7 +2,6 @@ extends CanvasLayer
 
 ## Game UI - HUD overlay showing player info, needs, and menus
 
-# UI Elements (created in code)
 var money_label: Label
 var time_label: Label
 var day_label: Label
@@ -12,14 +11,12 @@ var message_timer: float = 0.0
 var multiplayer_panel: VBoxContainer
 var player_list_label: Label
 
-# Needs bars
 var hunger_bar: ProgressBar
 var energy_bar: ProgressBar
 var fun_bar: ProgressBar
 var hygiene_bar: ProgressBar
 var social_bar: ProgressBar
 
-# Menu
 var menu_visible: bool = false
 var menu_panel: PanelContainer
 
@@ -30,24 +27,28 @@ func _ready() -> void:
 	_setup_multiplayer_panel()
 	_setup_menu()
 
-	# Connect to game manager signals
+	# Connect to game manager signals (should exist now - created before UI)
 	var gm = get_node_or_null("/root/Main/GameManager")
 	if gm:
-		gm.money_changed.connect(_on_money_changed)
-		gm.message_displayed.connect(_on_message_displayed)
-		gm.day_started.connect(_on_day_started)
+		if not gm.money_changed.is_connected(_on_money_changed):
+			gm.money_changed.connect(_on_money_changed)
+		if not gm.message_displayed.is_connected(_on_message_displayed):
+			gm.message_displayed.connect(_on_message_displayed)
+		if not gm.day_started.is_connected(_on_day_started):
+			gm.day_started.connect(_on_day_started)
 
-func _process(delta: float) -> void:
-	# Update time display
+func _process(_delta: float) -> void:
 	var gm = get_node_or_null("/root/Main/GameManager")
 	if gm:
-		time_label.text = "🕐 " + gm.get_time_string()
-		day_label.text = "📅 Day %d" % gm.current_day
+		if time_label:
+			time_label.text = "🕐 " + gm.get_time_string()
+		if day_label:
+			day_label.text = "📅 Day %d" % gm.current_day
 		_update_needs_display()
 
 	# Fade message
 	if message_label and message_label.visible:
-		message_timer -= delta
+		message_timer -= _delta
 		if message_timer <= 0:
 			message_label.visible = false
 
@@ -59,7 +60,6 @@ func _unhandled_input(event: InputEvent) -> void:
 ## ---- Setup Functions ----
 
 func _setup_hud() -> void:
-	# Top bar
 	var top_bar := HBoxContainer.new()
 	top_bar.name = "TopBar"
 	top_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
@@ -69,7 +69,6 @@ func _setup_hud() -> void:
 	top_bar.offset_top = 10
 	add_child(top_bar)
 
-	# Money
 	money_label = Label.new()
 	money_label.name = "MoneyLabel"
 	money_label.text = "💰 5000$"
@@ -77,19 +76,16 @@ func _setup_hud() -> void:
 	money_label.add_theme_color_override("font_color", Color(0.2, 0.8, 0.2))
 	top_bar.add_child(money_label)
 
-	# Spacer
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(spacer)
 
-	# Day
 	day_label = Label.new()
 	day_label.name = "DayLabel"
 	day_label.text = "📅 Day 1"
 	day_label.add_theme_font_size_override("font_size", 20)
 	top_bar.add_child(day_label)
 
-	# Time
 	time_label = Label.new()
 	time_label.name = "TimeLabel"
 	time_label.text = "🕐 08:00"
@@ -98,7 +94,6 @@ func _setup_hud() -> void:
 	top_bar.add_child(time_label)
 
 func _setup_needs_panel() -> void:
-	# Left side needs panel
 	needs_container = VBoxContainer.new()
 	needs_container.name = "NeedsPanel"
 	needs_container.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
@@ -133,10 +128,7 @@ func _setup_needs_panel() -> void:
 		bar.show_percentage = false
 		var style := StyleBoxFlat.new()
 		style.bg_color = nd[2]
-		style.corner_radius_top_left = 4
-		style.corner_radius_top_right = 4
-		style.corner_radius_bottom_left = 4
-		style.corner_radius_bottom_right = 4
+		corner_radius_all(style, 4)
 		bar.add_theme_stylebox_override("fill", style)
 		var bg_style := StyleBoxFlat.new()
 		bg_style.bg_color = Color(0.15, 0.15, 0.2, 0.8)
@@ -152,7 +144,20 @@ func _setup_needs_panel() -> void:
 			"social": social_bar = bar
 
 func _setup_message_area() -> void:
-	# Bottom center message
+	# Background panel for message
+	var msg_bg := PanelContainer.new()
+	msg_bg.name = "MessageBG"
+	msg_bg.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	msg_bg.offset_bottom = -75
+	msg_bg.offset_top = -125
+	msg_bg.offset_left = 180
+	msg_bg.offset_right = -180
+	var msg_style := StyleBoxFlat.new()
+	msg_style.bg_color = Color(0, 0, 0, 0.6)
+	corner_radius_all(msg_style, 8)
+	msg_bg.add_theme_stylebox_override("panel", msg_style)
+	add_child(msg_bg)
+
 	message_label = Label.new()
 	message_label.name = "MessageLabel"
 	message_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
@@ -166,23 +171,7 @@ func _setup_message_area() -> void:
 	message_label.visible = false
 	add_child(message_label)
 
-	# Add background panel for message
-	var msg_bg := PanelContainer.new()
-	msg_bg.name = "MessageBG"
-	msg_bg.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	msg_bg.offset_bottom = -75
-	msg_bg.offset_top = -125
-	msg_bg.offset_left = 180
-	msg_bg.offset_right = -180
-	var msg_style := StyleBoxFlat.new()
-	msg_style.bg_color = Color(0, 0, 0, 0.6)
-	corner_radius_all(msg_style, 8)
-	msg_bg.add_theme_stylebox_override("panel", msg_style)
-	add_child(msg_bg)
-	move_child(msg_bg, get_child_count() - 2)  # Behind text
-
 func _setup_multiplayer_panel() -> void:
-	# Right side multiplayer info
 	multiplayer_panel = VBoxContainer.new()
 	multiplayer_panel.name = "MultiplayerPanel"
 	multiplayer_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -232,7 +221,6 @@ func _setup_menu() -> void:
 	var sep := HSeparator.new()
 	vbox.add_child(sep)
 
-	# Menu buttons
 	var buttons := ["Resume", "Settings", "Disconnect", "Quit"]
 	for btn_text in buttons:
 		var btn := Button.new()
@@ -244,25 +232,33 @@ func _setup_menu() -> void:
 
 ## ---- Update Functions ----
 
-func update_player_info(p_name: String, money: int, house_count: int) -> void:
-	money_label.text = "💰 %d$" % money
+func update_player_info(p_name: String, new_money: int, house_count: int) -> void:
+	if money_label:
+		money_label.text = "💰 %d$" % new_money
 
 func update_player_list(players: Array) -> void:
+	if not player_list_label:
+		return
 	var count := players.size()
 	player_list_label.text = "%d player%s" % [count, "s" if count != 1 else ""]
 	for i in range(count):
 		player_list_label.text += "\n  • %s" % players[i]
 
+func show_message(text: String) -> void:
+	if message_label:
+		message_label.text = text
+		message_label.visible = true
+		message_timer = 4.0
+
 func _on_money_changed(new_amount: int) -> void:
-	money_label.text = "💰 %d$" % new_amount
+	if money_label:
+		money_label.text = "💰 %d$" % new_amount
 
 func _on_message_displayed(text: String) -> void:
-	message_label.text = text
-	message_label.visible = true
-	message_timer = 4.0
+	show_message(text)
 
 func _on_day_started(day: int) -> void:
-	_on_message_displayed("Day %d has begun!" % day)
+	show_message("Day %d has begun!" % day)
 
 func _update_needs_display() -> void:
 	var gm = get_node_or_null("/root/Main/GameManager")
@@ -280,8 +276,8 @@ func _on_menu_button(button_text: String) -> void:
 			menu_visible = false
 			menu_panel.visible = false
 		"Disconnect":
-			var mp = get_node_or_null("/root/Main/MultiplayerManager")
-			if mp:
+			var mp = get_node_or_null("/root/Main/MultiplayerController")
+			if mp and mp.has_method("disconnect_from_game"):
 				mp.disconnect_from_game()
 			menu_visible = false
 			menu_panel.visible = false

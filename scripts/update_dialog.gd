@@ -17,6 +17,17 @@ func _ready() -> void:
 	visible = false
 	_setup_ui()
 
+	# Connect to auto_updater
+	var updater = get_node_or_null("/root/Main/AutoUpdater")
+	if updater:
+		if updater.update_available.is_connected(_on_update_available):
+			pass  # Already connected
+		else:
+			updater.update_available.connect(_on_update_available)
+
+func _on_update_available(cur: String, new_ver: String, url: String) -> void:
+	show_update_dialog(cur, new_ver, url)
+
 func _setup_ui() -> void:
 	# Background
 	var bg := ColorRect.new()
@@ -35,10 +46,7 @@ func _setup_ui() -> void:
 
 	var ps := StyleBoxFlat.new()
 	ps.bg_color = Color(0.12, 0.15, 0.2, 0.98)
-	ps.corner_radius_top_left = 16
-	ps.corner_radius_top_right = 16
-	ps.corner_radius_bottom_left = 16
-	ps.corner_radius_bottom_right = 16
+	corner_radius_all(ps, 16)
 	ps.border_width_top = 2
 	ps.border_width_bottom = 2
 	ps.border_width_left = 2
@@ -57,7 +65,7 @@ func _setup_ui() -> void:
 
 	# Title
 	title_label = Label.new()
-	title_label.text = "Доступно обновление!"
+	title_label.text = "🔄 Доступно обновление!"
 	title_label.add_theme_font_size_override("font_size", 26)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_color_override("font_color", Color(1, 0.9, 0.7))
@@ -68,10 +76,9 @@ func _setup_ui() -> void:
 
 	# Description
 	desc_label = Label.new()
-	desc_label.text = "Новая версия доступна."
+	desc_label.text = "Хотите обновить игру?"
 	desc_label.add_theme_font_size_override("font_size", 16)
 	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(desc_label)
 
 	# Version info
@@ -81,19 +88,19 @@ func _setup_ui() -> void:
 	vbox.add_child(vb)
 
 	var lbl1 := Label.new()
-	lbl1.text = "Текущая: v%s" % current_version
+	lbl1.text = "📱 Текущая: v%s" % current_version
 	lbl1.add_theme_font_size_override("font_size", 14)
 	lbl1.add_theme_color_override("font_color", Color(0.6, 0.7, 0.8))
 	vb.add_child(lbl1)
 
 	var arrow := Label.new()
-	arrow.text = " -> "
+	arrow.text = " → "
 	arrow.add_theme_font_size_override("font_size", 18)
 	arrow.add_theme_color_override("font_color", Color(0.3, 0.8, 0.4))
 	vb.add_child(arrow)
 
 	var lbl2 := Label.new()
-	lbl2.text = "Новая: v%s" % new_version
+	lbl2.text = "🆕 Новая: v%s" % new_version
 	lbl2.add_theme_font_size_override("font_size", 14)
 	lbl2.add_theme_color_override("font_color", Color(0.3, 0.8, 0.4))
 	vb.add_child(lbl2)
@@ -125,21 +132,21 @@ func _setup_ui() -> void:
 	vbox.add_child(btn_container)
 
 	var update_btn := Button.new()
-	update_btn.text = "Обновить сейчас"
+	update_btn.text = "✅ Обновить сейчас"
 	update_btn.custom_minimum_size = Vector2(350, 42)
 	update_btn.add_theme_font_size_override("font_size", 18)
 	update_btn.pressed.connect(_on_update_pressed)
 	btn_container.add_child(update_btn)
 
 	var remind_btn := Button.new()
-	remind_btn.text = "Напомнить позже"
+	remind_btn.text = "⏰ Напомнить позже"
 	remind_btn.custom_minimum_size = Vector2(350, 38)
 	remind_btn.add_theme_font_size_override("font_size", 16)
 	remind_btn.pressed.connect(_on_remind_pressed)
 	btn_container.add_child(remind_btn)
 
 	var skip_btn := Button.new()
-	skip_btn.text = "Пропустить"
+	skip_btn.text = "❌ Пропустить"
 	skip_btn.custom_minimum_size = Vector2(350, 38)
 	skip_btn.add_theme_font_size_override("font_size", 16)
 	skip_btn.pressed.connect(_on_skip_pressed)
@@ -163,6 +170,7 @@ func _on_update_pressed() -> void:
 
 	var updater = get_node_or_null("/root/Main/AutoUpdater")
 	if updater:
+		updater.download_url = download_url
 		updater.start_download()
 
 func _on_remind_pressed() -> void:
@@ -170,3 +178,9 @@ func _on_remind_pressed() -> void:
 
 func _on_skip_pressed() -> void:
 	visible = false
+
+func corner_radius_all(style: StyleBoxFlat, radius: int) -> void:
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius

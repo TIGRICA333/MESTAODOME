@@ -11,16 +11,14 @@ signal server_full()
 
 const MAX_PLAYERS: int = 32
 const SERVER_PORT: int = 7777
-const SERVER_IP: String = "127.0.0.1"  # Change for internet play
 
 var peer: ENetMultiplayerPeer
 var is_server: bool = false
-var connected_players: Dictionary = {}  # peer_id -> {name, position, color}
+var connected_players: Dictionary = {}
 var local_peer_id: int = 0
 
-# Sync data
 var sync_timer: float = 0.0
-var sync_interval: float = 0.05  # 50ms update rate (20 ticks/sec)
+var sync_interval: float = 0.05
 
 func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_peer_connected)
@@ -28,6 +26,32 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
+
+	# Check if we need to auto-connect based on menu selection
+	_check_menu_connection()
+
+func _check_menu_connection() -> void:
+	var root := get_tree().root
+	var mode: String = root.get_meta("mp_mode", "solo")
+
+	if mode == "host":
+		var port: int = root.get_meta("mp_port", SERVER_PORT)
+		# Apply player name
+		var pname: String = root.get_meta("player_name", "Player")
+		_apply_player_name(pname)
+		host_game(port)
+	elif mode == "join":
+		var ip: String = root.get_meta("mp_ip", "127.0.0.1")
+		var port: int = root.get_meta("mp_port", SERVER_PORT)
+		var pname: String = root.get_meta("player_name", "Player")
+		_apply_player_name(pname)
+		join_game(ip, port)
+	# Solo mode = no connection needed
+
+func _apply_player_name(pname: String) -> void:
+	var player = get_node_or_null("/root/Main/Player")
+	if player and player.has_method("set_player_name"):
+		player.set_player_name(pname)
 
 func _process(delta: float) -> void:
 	sync_timer += delta
@@ -46,11 +70,11 @@ func host_game(port: int = SERVER_PORT) -> Error:
 
 	multiplayer.multiplayer_peer = peer
 	is_server = true
-	local_peer_id = 1  # Server is always peer 1
+	local_peer_id = 1
 	print("🖥️ Hosting game on port ", port)
 	return OK
 
-func join_game(address: String = SERVER_IP, port: int = SERVER_PORT) -> Error:
+func join_game(address: String = "127.0.0.1", port: int = SERVER_PORT) -> Error:
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_client(address, port)
 	if err != OK:
@@ -83,14 +107,12 @@ func _on_peer_connected(id: int) -> void:
 	}
 	player_connected.emit(id)
 
-	# Send current world state to new player
 	if is_server:
 		_send_world_state(id)
 
 func _on_peer_disconnected(id: int) -> void:
 	print("Player disconnected: ", id)
 	connected_players.erase(id)
-	# Remove their player from scene
 	var world = get_node_or_null("/root/Main/World")
 	if world:
 		world.remove_remote_player(id)
@@ -115,7 +137,7 @@ func _on_server_disconnected() -> void:
 @rpc("any_peer", "reliable")
 func sync_player_data(peer_id: int, data: Dictionary) -> void:
 	if peer_id == local_peer_id:
-		return  # Ignore our own data
+		return
 	connected_players[peer_id] = data
 	var world = get_node_or_null("/root/Main/World")
 	if world:
@@ -170,12 +192,10 @@ func send_house_purchase(house_id: int, owner_id: int) -> void:
 		sync_house_purchase.rpc_id(1, house_id, owner_id)
 
 func _send_world_state(target_peer: int) -> void:
-	# Send all existing players to the new player
 	for pid in connected_players:
 		sync_player_join.rpc_id(target_peer, pid, connected_players[pid])
 
 func _sync_positions() -> void:
-	# Periodic sync for late joiners or missed packets
 	pass
 
 ## ---- Utility ----
@@ -184,7 +204,7 @@ func is_connected_to_server() -> bool:
 	return multiplayer.has_multiplayer_peer() and multiplayer.get_connection_status() == Multiplayer.CONNECTION_CONNECTED
 
 func get_connected_count() -> int:
-	return connected_players.size() + 1  # +1 for self
+	return connected_players.size() + 1
 
 func get_player_list() -> Array:
 	var list := []

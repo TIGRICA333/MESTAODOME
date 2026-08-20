@@ -4,19 +4,21 @@ extends Node
 
 signal update_available(current_version: String, new_version: String, download_url: String)
 signal update_check_failed(error: String)
+signal download_progress(progress: float)
+signal download_completed()
 
 const GITHUB_OWNER: String = "TIGRICA333"
 const GITHUB_REPO: String = "MESTAODOME"
 const GITHUB_API_URL: String = "https://api.github.com/repos/%s/%s/releases/latest"
 
-const GAME_VERSION: String = "1.1.0"
+const GAME_VERSION: String = "1.2.0"
 
 var latest_version: String = ""
 var download_url: String = ""
 var is_checking: bool = false
 var http_request: HTTPRequest
-var check_timer: float = 0.0
-var check_delay: float = 3.0  # Wait 3 seconds before checking
+var download_request: HTTPRequest
+var check_delay: float = 3.0
 
 func _ready() -> void:
 	http_request = HTTPRequest.new()
@@ -25,12 +27,15 @@ func _ready() -> void:
 	add_child(http_request)
 	http_request.request_completed.connect(_on_check_completed)
 
-func _process(delta: float) -> void:
+	download_request = HTTPRequest.new()
+	download_request.name = "Downloader"
+	download_request.timeout = 120.0
+	add_child(download_request)
+	download_request.request_completed.connect(_on_download_completed)
+
 	# Delay check to avoid blocking startup
-	if check_timer > 0:
-		check_timer -= delta
-		if check_timer <= 0:
-			check_for_updates()
+	await get_tree().create_timer(check_delay).timeout
+	check_for_updates()
 
 func check_for_updates() -> void:
 	if is_checking:
@@ -78,6 +83,63 @@ func _on_check_completed(result: int, response_code: int, _headers: PackedString
 			print("[Updater] No .exe found")
 	else:
 		print("[Updater] Game is up to date!")
+
+func start_download() -> void:
+	if download_url == "":
+		print("[Updater] No download URL")
+		return
+
+	print("[Updater] Downloading: ", download_url)
+	var error := download_request.request(download_url)
+	if error != OK:
+		print("[Updater] Download request failed: ", error_string(error))
+
+func _on_download_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		print("[Updater] Download failed")
+		return
+
+	print("[Updater] Download complete! Size: ", body.size(), " bytes")
+
+	# Save the downloaded file
+	var exe_path := OS.get_executable_path().get_base_dir()
+	var new_exe_path := exe_path.path_join("BuildYourHouse_new.exe")
+
+	var file := FileAccess.open(new_exe_path, FileAccess.WRITE)
+	if file:
+		file.store_buffer(body)
+		file.close()
+		print("[Updater] Saved to: ", new_exe_path)
+
+		# Create batch file to replace the old exe
+		_create_update_batch(exe_path, new_exe_path)
+		download_completed.emit()
+
+		# Quit and let batch file handle replacement
+		get_tree().quit()
+	else:
+		print("[Updater] Failed to save file")
+
+func _create_update_batch(exe_dir: String, new_path: String) -> void:
+	var bat_path := exe_dir.path_join("update.bat")
+	var exe_name := OS.get_executable_path().get_file()
+	var old_path := exe_dir.path_join(exe_name)
+
+	var bat_content := """@echo off
+timeout /t 2 /nobreak >nul
+del "%s"
+ren "%s" "%s"
+start "" "%s"
+del "%%~f0"
+""" % [old_path, new_path, exe_name, old_path]
+
+	var file := FileAccess.open(bat_path, FileAccess.WRITE)
+	if file:
+		file.store_string(bat_content)
+		file.close()
+
+		# Execute the batch file
+		OS.shell_open(bat_path)
 
 func _version_is_newer(new_ver: String, current_ver: String) -> bool:
 	var new_parts := new_ver.split(".")

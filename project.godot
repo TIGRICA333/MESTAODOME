@@ -7,7 +7,7 @@
 config/name="Build Your House"
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
-config/version="1.0.0"
+config/version="1.2.0"
 
 [display]
 

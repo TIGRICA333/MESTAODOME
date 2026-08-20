@@ -8,7 +8,7 @@ signal message_displayed(text: String)
 signal day_started(day: int)
 
 var current_day: int = 1
-var game_time: float = 0.0  # 0-24 hours
+var game_time: float = 8.0  # Start at 8:00 AM
 var day_duration: float = 120.0  # seconds per in-game day
 
 var player_data: Dictionary = {
@@ -25,12 +25,10 @@ var player_data: Dictionary = {
 	}
 }
 
-# Economy
 var job_salary: int = 500
 var rent_cost: int = 200
 
 func _ready() -> void:
-	# Start the day cycle
 	pass
 
 func _process(delta: float) -> void:
@@ -48,16 +46,14 @@ func _on_new_day() -> void:
 	day_started.emit(current_day)
 	print("Day ", current_day, " begins!")
 
-	# Pay salary
 	add_money(job_salary)
 	show_message("Day %d - Salary: +%d$" % [current_day, job_salary])
 
-	# Charge rent for owned houses
 	for house_id in player_data["houses"]:
 		spend_money(rent_cost)
 
 func _update_needs(delta: float) -> void:
-	var decay_rate: float = 0.5  # per second
+	var decay_rate: float = 0.5
 	player_data["needs"]["hunger"] = max(0, player_data["needs"]["hunger"] - decay_rate * delta)
 	player_data["needs"]["energy"] = max(0, player_data["needs"]["energy"] - decay_rate * delta * 0.5)
 	player_data["needs"]["fun"] = max(0, player_data["needs"]["fun"] - decay_rate * delta * 0.3)
@@ -102,8 +98,8 @@ func get_time_string() -> String:
 	return "%02d:%02d" % [hours, minutes]
 
 func is_multiplayer_active() -> bool:
-	var mp = get_node_or_null("/root/Main/MultiplayerManager")
-	return mp != null and mp.is_connected_to_server()
+	var mp = get_node_or_null("/root/Main/MultiplayerController")
+	return mp != null and mp.has_method("is_connected_to_server") and mp.is_connected_to_server()
 
 func get_player_name(id: int) -> String:
 	return "Player_%d" % id

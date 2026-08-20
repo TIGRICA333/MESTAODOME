@@ -10,10 +10,10 @@ func _ready() -> void:
 	print("[Game] World OK")
 	_setup_player()
 	print("[Game] Player OK")
-	_setup_ui()
-	print("[Game] UI OK")
 	_setup_game_manager()
 	print("[Game] GameManager OK")
+	_setup_ui()
+	print("[Game] UI OK")
 	_setup_multiplayer()
 	print("[Game] Multiplayer OK")
 	_start_game()
@@ -31,7 +31,7 @@ func _setup_environment() -> void:
 	env.ambient_light_color = Color(0.9, 0.85, 0.8, 1)
 	env.ambient_light_energy = 0.8
 	env.tonemap_mode = Environment.TONE_MAP_ACES
-	env.fog_enabled = false  # Disable fog for clarity
+	env.fog_enabled = false
 	world_env.environment = env
 
 	# Sun
@@ -53,7 +53,7 @@ func _setup_world() -> void:
 func _setup_player() -> void:
 	var player := CharacterBody3D.new()
 	player.name = "Player"
-	player.position = Vector3(0, 0.5, 0)
+	player.position = Vector3(0, 1.0, 0)  # Start above ground
 
 	# Collision shape
 	var col := CollisionShape3D.new()
@@ -63,7 +63,7 @@ func _setup_player() -> void:
 	col.shape = shape
 	player.add_child(col)
 
-	# Add camera BEFORE setting script (so @onready finds it)
+	# Add camera BEFORE setting script (so _ready finds it)
 	var camera := Camera3D.new()
 	camera.name = "Camera"
 	camera.position = Vector3(0, 4, 6)
@@ -77,17 +77,17 @@ func _setup_player() -> void:
 	player.set_script(load("res://scripts/player.gd"))
 	add_child(player)
 
-func _setup_ui() -> void:
-	var ui := CanvasLayer.new()
-	ui.name = "UI"
-	ui.set_script(load("res://scripts/ui.gd"))
-	add_child(ui)
-
 func _setup_game_manager() -> void:
 	var gm := Node.new()
 	gm.name = "GameManager"
 	gm.set_script(load("res://scripts/game_manager.gd"))
 	add_child(gm)
+
+func _setup_ui() -> void:
+	var ui := CanvasLayer.new()
+	ui.name = "UI"
+	ui.set_script(load("res://scripts/ui.gd"))
+	add_child(ui)
 
 func _setup_multiplayer() -> void:
 	var mp := Node.new()
@@ -97,7 +97,7 @@ func _setup_multiplayer() -> void:
 
 func _start_game() -> void:
 	print("========================================")
-	print("  🏠 Build Your House v1.1.0")
+	print("  🏠 Build Your House v1.2.0")
 	print("  WASD - Move | Mouse - Look")
 	print("  E - Interact | Shift - Run")
 	print("  ESC - Menu")

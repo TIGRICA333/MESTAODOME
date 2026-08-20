@@ -43,7 +43,6 @@ func _setup_ui() -> void:
 	subtitle.add_theme_color_override("font_color", Color(0.6, 0.7, 0.8))
 	main_vbox.add_child(subtitle)
 
-	# Separator
 	var sep := HSeparator.new()
 	main_vbox.add_child(sep)
 
@@ -133,57 +132,33 @@ func _on_host_pressed() -> void:
 	status_label.text = "Starting server..."
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.4))
 
-	var mp = get_node_or_null("/root/Main/MultiplayerController")
-	if not mp:
-		# Need to create multiplayer manager first
-		var game = get_tree().root.get_node_or_null("Main")
-		if game:
-			mp = Node.new()
-			mp.name = "MultiplayerController"
-			mp.set_script(load("res://scripts/multiplayer_manager.gd"))
-			game.add_child(mp)
+	# Store connection info for main scene to use
+	var port := int(port_input.text) if port_input.text.is_valid_int() else 7777
+	_save_connection_data("host", "", port)
 
-	if mp:
-		var port := int(port_input.text) if port_input.text.is_valid_int() else 7777
-		var err := mp.host_game(port)
-		if err == OK:
-			_start_game(true)
-		else:
-			status_label.text = "Failed to start server!"
-			status_label.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
+	_start_game()
 
 func _on_join_pressed() -> void:
 	status_label.text = "Connecting..."
 	status_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
 
-	var mp = get_node_or_null("/root/Main/MultiplayerController")
-	if not mp:
-		var game = get_tree().root.get_node_or_null("Main")
-		if game:
-			mp = Node.new()
-			mp.name = "MultiplayerController"
-			mp.set_script(load("res://scripts/multiplayer_manager.gd"))
-			game.add_child(mp)
+	var ip := ip_input.text if ip_input.text != "" else "127.0.0.1"
+	var port := int(port_input.text) if port_input.text.is_valid_int() else 7777
+	_save_connection_data("join", ip, port)
 
-	if mp:
-		var ip := ip_input.text if ip_input.text != "" else "127.0.0.1"
-		var port := int(port_input.text) if port_input.text.is_valid_int() else 7777
-		var err := mp.join_game(ip, port)
-		if err == OK:
-			# Wait for connection
-			await get_tree().create_timer(3.0).timeout
-			if mp.is_connected_to_server():
-				_start_game(false)
-			else:
-				status_label.text = "Connection failed! Check IP/port."
-				status_label.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
-		else:
-			status_label.text = "Failed to connect!"
-			status_label.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
+	_start_game()
 
 func _on_solo_pressed() -> void:
-	_start_game(false)
+	_save_connection_data("solo", "", 0)
+	_start_game()
 
-func _start_game(is_host: bool) -> void:
-	# Load the game scene
+func _save_connection_data(mode: String, ip: String, port: int) -> void:
+	# Store in root so main.gd can read it
+	var root := get_tree().root
+	root.set_meta("mp_mode", mode)
+	root.set_meta("mp_ip", ip)
+	root.set_meta("mp_port", port)
+	root.set_meta("player_name", name_input.text if name_input else "Player")
+
+func _start_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")

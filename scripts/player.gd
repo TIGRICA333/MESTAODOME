@@ -19,7 +19,6 @@ var body_mesh: MeshInstance3D
 var name_label: Label3D
 
 func _ready() -> void:
-	# Find camera (added by main.gd)
 	camera = get_node_or_null("Camera")
 	_setup_character_mesh()
 	_setup_name_label()
@@ -68,9 +67,9 @@ func _physics_process(delta: float) -> void:
 	_send_position_update()
 
 func _send_position_update() -> void:
-	var game_manager = get_node_or_null("/root/Main/GameManager")
-	if game_manager and game_manager.is_multiplayer_active():
-		game_manager.send_player_position(global_position, rotation.y)
+	var mp = get_node_or_null("/root/Main/MultiplayerController")
+	if mp and mp.has_method("is_connected_to_server") and mp.is_connected_to_server():
+		mp.send_player_position(global_position, rotation.y)
 
 func _setup_character_mesh() -> void:
 	if body_mesh:

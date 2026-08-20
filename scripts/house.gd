@@ -19,8 +19,18 @@ var price_label: Label3D
 var interaction_area: Area3D
 
 func _ready() -> void:
+	_setup_house_collision()
 	_setup_house_mesh()
 	_update_price_display()
+
+func _setup_house_collision() -> void:
+	# Physical collision for the house body (prevents walking through)
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(5, 3.5, 6)
+	col.shape = shape
+	col.position.y = 1.75
+	add_child(col)
 
 func _setup_house_mesh() -> void:
 	# House body
@@ -90,11 +100,11 @@ func _setup_house_mesh() -> void:
 	# Interaction area
 	interaction_area = Area3D.new()
 	interaction_area.name = "InteractionArea"
-	var col := CollisionShape3D.new()
-	var shape := SphereShape3D.new()
-	shape.radius = 4.0
-	col.shape = shape
-	interaction_area.add_child(col)
+	var area_col := CollisionShape3D.new()
+	var area_shape := SphereShape3D.new()
+	area_shape.radius = 4.0
+	area_col.shape = area_shape
+	interaction_area.add_child(area_col)
 	add_child(interaction_area)
 	interaction_area.body_entered.connect(_on_player_enter)
 	interaction_area.body_exited.connect(_on_player_exit)
@@ -145,10 +155,12 @@ func _handle_interaction() -> void:
 				game_manager.show_message("Welcome to %s!" % house_name)
 		else:
 			print("This house belongs to someone else")
+			var game_manager = get_node_or_null("/root/Main/GameManager")
+			if game_manager:
+				game_manager.show_message("This house belongs to someone else!")
 	else:
 		if player_in_range.spend_money(house_price):
 			owner_id = player_in_range.get_instance_id()
-			house_color = Color(0.2, 0.8, 0.2, 1.0)
 			_update_price_display()
 			print("Bought house: ", house_name)
 			var game_manager = get_node_or_null("/root/Main/GameManager")
