@@ -1,44 +1,48 @@
 extends Node3D
 
-## Main Scene Controller - creates all game systems in code
+## Main Scene Controller
 
 func _ready() -> void:
+	print("[Game] Starting Build Your House...")
 	_setup_environment()
+	print("[Game] Environment OK")
 	_setup_world()
+	print("[Game] World OK")
 	_setup_player()
+	print("[Game] Player OK")
 	_setup_ui()
+	print("[Game] UI OK")
 	_setup_game_manager()
+	print("[Game] GameManager OK")
 	_setup_multiplayer()
-	_setup_updater()
+	print("[Game] Multiplayer OK")
 	_start_game()
 
 func _setup_environment() -> void:
-	# World environment
+	# Sky background
 	var world_env := WorldEnvironment.new()
 	world_env.name = "WorldEnvironment"
 	add_child(world_env)
 
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.75, 0.85, 1.0, 1)
+	env.background_color = Color(0.53, 0.81, 0.92, 1)  # Light blue sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.9, 0.85, 0.8, 1)
-	env.ambient_light_energy = 0.6
+	env.ambient_light_energy = 0.8
 	env.tonemap_mode = Environment.TONE_MAP_ACES
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.8, 0.9, 1.0, 1)
-	env.fog_density = 0.003
+	env.fog_enabled = false  # Disable fog for clarity
 	world_env.environment = env
 
-	# Directional light
-	var light := DirectionalLight3D.new()
-	light.name = "Sun"
-	light.rotation_degrees = Vector3(-45, 30, 0)
-	light.light_color = Color(1.0, 0.95, 0.85, 1)
-	light.light_energy = 1.2
-	light.shadow_enabled = true
-	light.directional_shadow_max_distance = 80.0
-	add_child(light)
+	# Sun
+	var sun := DirectionalLight3D.new()
+	sun.name = "Sun"
+	sun.rotation_degrees = Vector3(-45, 30, 0)
+	sun.light_color = Color(1.0, 0.95, 0.85, 1)
+	sun.light_energy = 1.5
+	sun.shadow_enabled = true
+	sun.directional_shadow_max_distance = 80.0
+	add_child(sun)
 
 func _setup_world() -> void:
 	var world := Node3D.new()
@@ -51,7 +55,7 @@ func _setup_player() -> void:
 	player.name = "Player"
 	player.position = Vector3(0, 0.5, 0)
 
-	# Collision
+	# Collision shape
 	var col := CollisionShape3D.new()
 	var shape := CapsuleShape3D.new()
 	shape.radius = 0.35
@@ -59,10 +63,7 @@ func _setup_player() -> void:
 	col.shape = shape
 	player.add_child(col)
 
-	player.set_script(load("res://scripts/player.gd"))
-	add_child(player)
-
-	# Camera
+	# Add camera BEFORE setting script (so @onready finds it)
 	var camera := Camera3D.new()
 	camera.name = "Camera"
 	camera.position = Vector3(0, 4, 6)
@@ -71,6 +72,10 @@ func _setup_player() -> void:
 	camera.far = 200.0
 	camera.set_script(load("res://scripts/camera_controller.gd"))
 	player.add_child(camera)
+
+	# Set player script AFTER camera is added
+	player.set_script(load("res://scripts/player.gd"))
+	add_child(player)
 
 func _setup_ui() -> void:
 	var ui := CanvasLayer.new()
@@ -90,33 +95,13 @@ func _setup_multiplayer() -> void:
 	mp.set_script(load("res://scripts/multiplayer_manager.gd"))
 	add_child(mp)
 
-func _setup_updater() -> void:
-	var updater := Node.new()
-	updater.name = "AutoUpdater"
-	updater.set_script(load("res://scripts/auto_updater.gd"))
-	add_child(updater)
-
-	var dialog := CanvasLayer.new()
-	dialog.name = "UpdateDialog"
-	dialog.set_script(load("res://scripts/update_dialog.gd"))
-	add_child(dialog)
-
-	# Connect updater signals
-	updater.update_available.connect(_on_update_available)
-	updater.update_check_failed.connect(_on_update_check_failed)
-
-func _on_update_available(current: String, new_version: String, url: String) -> void:
-	var dialog = get_node_or_null("UpdateDialog")
-	if dialog:
-		dialog.show_update_dialog(current, new_version, url)
-
-func _on_update_check_failed(error: String) -> void:
-	print("[Updater] Check failed: ", error)
-
 func _start_game() -> void:
-	print("🌍 Welcome to Build Your House!")
-	print("🎮 WASD to move, Mouse to look, E to interact, Shift to sprint")
-	print("📋 ESC for menu")
+	print("========================================")
+	print("  🏠 Build Your House v1.1.0")
+	print("  WASD - Move | Mouse - Look")
+	print("  E - Interact | Shift - Run")
+	print("  ESC - Menu")
+	print("========================================")
 
 	var ui = get_node_or_null("UI")
 	if ui and ui.has_method("show_message"):
