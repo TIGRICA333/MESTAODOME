@@ -1,1 +1,58 @@
-подобная игра sims но в 3д графике, с мультиплеером :игроки  могут путешествовать по огромной стране, покупать и продовать дома , симс но получше
+🏡 SimsWorld - Multiplayer Life Simulator
+==========================================
+
+3D multiplayer game inspired by The Sims with internet multiplayer support.
+
+🎯 Features:
+- 🏠 Buy and own houses
+- 🚶 Walk around the open world
+- 👥 See other players online
+- 💰 Earn money, manage needs
+- 🌐 Host or join games
+
+📋 REQUIREMENTS:
+1. Download Godot 4.3+: https://godotengine.org/download
+2. No extra dependencies needed - everything is included!
+
+🎮 HOW TO PLAY:
+1. Open Godot Engine
+2. Click "Import" and select this folder
+3. Click the ▶ Play button (or F5)
+4. Enter your name and choose Host/Join/Solo
+
+⌨️ CONTROLS:
+- WASD - Move
+- Mouse (hold Right Click) - Look around
+- Scroll - Zoom in/out
+- E - Interact with houses
+- Shift - Sprint
+- ESC - Menu
+
+🌐 MULTIPLAYER:
+- HOST: Click "Host Game" - others connect to your IP
+- JOIN: Enter the host's IP and click "Join Game"
+- Default port: 7777
+
+💻 BUILD .EXE FOR WINDOWS:
+1. In Godot: Project → Export
+2. Add "Windows Desktop" preset
+3. Click "Export Project"
+4. Your .exe is ready!
+
+SERVER (optional):
+  godot --headless --script res://scripts/server.gd
+
+📁 PROJECT STRUCTURE:
+  scenes/
+    main.tscn       - Game world scene
+    menu.tscn       - Main menu scene
+  scripts/
+    main.gd         - Game initialization
+    main_menu.gd    - Menu screen
+    player.gd       - Player character
+    camera_controller.gd - Third-person camera
+    house.gd        - House interaction
+    game_manager.gd - Economy and game state
+    multiplayer_manager.gd - Network sync
+    world.gd        - World generation
+    server.gd       - Dedicated server

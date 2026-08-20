@@ -1,0 +1,116 @@
+name: 🏗️ Build Windows .exe
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  GODOT_VERSION: 4.3
+  EXPORT_NAME: SimsWorld
+
+jobs:
+  export-windows:
+    name: 🪟 Build Windows
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: 📦 Install Godot
+        run: |
+          # Download Godot 4 headless
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip Godot_v4.3-stable_linux.x86_64.zip
+          mv Godot_v4.3-stable_linux.x86_64 godot
+          chmod +x godot
+          
+          # Download export templates
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          unzip -q Godot_v4.3-stable_export_templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
+
+      - name: 🔧 Create export_presets.cfg
+        run: |
+          cat > export_presets.cfg << 'EOF'
+          [preset.0]
+          
+          name="Windows Desktop"
+          platform="Windows Desktop"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="builds/${EXPORT_NAME}.exe"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+          
+          [preset.0.options]
+          
+          custom_template/debug=""
+          custom_template/release=""
+          debug/export_console_wrapper=1
+          binary_format/embed_pck=true
+          texture_format/s3tc_bptc=true
+          texture_format/etc2_astc=false
+          binary_format/architecture="x86_64"
+          codesign/enable=false
+          application/modify_resources=false
+          application/icon=""
+          application/console_wrapper_icon=""
+          application/icon_interpolation=4
+          application/file_version=""
+          application/product_version=""
+          application/company_name=""
+          application/product_name="${EXPORT_NAME}"
+          application/file_description=""
+          application/copyright=""
+          application/trademarks=""
+          application/export_angle=0
+          ssh_remote_deploy/enabled=false
+          EOF
+
+      - name: 🏗️ Export Windows Build
+        run: |
+          mkdir -p builds
+          ./godot --headless --import 2>&1 || true
+          ./godot --headless --export-release "Windows Desktop" builds/${EXPORT_NAME}.exe 2>&1 || true
+          ls -la builds/
+
+      - name: 📦 Create ZIP
+        run: |
+          cd builds
+          zip -r ../${EXPORT_NAME}-Windows.zip . 2>/dev/null || true
+          ls -la ..
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build #${{ github.run_number }}"
+          body: |
+            🏠 SimsWorld Build
+            
+            🪟 Windows .exe included in assets below!
+            
+            How to play:
+            1. Download SimsWorld-Windows.zip
+            2. Extract and run SimsWorld.exe
+            3. Enter your name and choose Host/Join/Solo
+            
+            Controls: WASD + Mouse
+          files: |
+            builds/${EXPORT_NAME}.exe
+            ${{ env.EXPORT_NAME }}-Windows.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

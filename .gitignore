@@ -1,0 +1,20 @@
+# Godot 4 specific
+.import/
+export_presets.cfg
+*.translation
+export/
+
+# Builds
+builds/
+*.exe
+*.pck
+*.zip
+
+# System
+.DS_Store
+Thumbs.db
+*~
+
+# IDE
+.vscode/
+.idea/
