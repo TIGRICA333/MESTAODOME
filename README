@@ -1,7 +1,7 @@
-🏡 SimsWorld - Multiplayer Life Simulator
-==========================================
+🏠 Build Your House - Multiplayer Life Simulator
+================================================
 
-3D multiplayer game inspired by The Sims with internet multiplayer support.
+3D multiplayer game - строй, живи, общайся!
 
 🎯 Features:
 - 🏠 Buy and own houses
@@ -45,22 +45,14 @@ for updates on startup and shows a dialog:
 │  ❌ Пропустить                  │
 └─────────────────────────────────┘
 
-• Update Now - Downloads and installs automatically
-• Remind Later - Checks again in 10 minutes
-• Skip - Ignores this version
-
 🌐 MULTIPLAYER:
 - HOST: Click "Host Game" - others connect to your IP
 - JOIN: Enter the host's IP and click "Join Game"
 - Default port: 7777
 
 💻 BUILD .EXE FOR WINDOWS:
-1. In Godot: Project → Export
-2. Add "Windows Desktop" preset
-3. Click "Export Project"
-4. Your .exe is ready!
-
 Automatically built via GitHub Actions on every push to main.
+Download from Actions tab → Build Your House → Artifacts.
 
 📁 PROJECT STRUCTURE:
   scenes/

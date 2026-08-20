@@ -1,4 +1,4 @@
-name: Build Windows
+name: Build Your House
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   export-windows:
-    name: Build Windows
+    name: Build Your House
     runs-on: ubuntu-latest
     
     steps:
@@ -40,7 +40,7 @@ jobs:
           export_filter="all_resources"
           include_filter=""
           exclude_filter=""
-          export_path="builds/SimsWorld.exe"
+          export_path="builds/BuildYourHouse.exe"
           encryption_include_filters=""
           encryption_exclude_filters=""
           encrypt_pck=false
@@ -57,13 +57,13 @@ jobs:
           binary_format/architecture="x86_64"
           codesign/enable=false
           application/modify_resources=false
-          application/icon=""
-          application/console_wrapper_icon=""
-          application/icon_interpolation=4
+          application.icon=""
+          application.console_wrapper_icon=""
+          application.icon_interpolation=4
           application.file_version=""
           application.product_version=""
           application.company_name=""
-          application.product_name="SimsWorld"
+          application.product_name="Build Your House"
           application.file_description=""
           application.copyright=""
           application.trademarks=""
@@ -80,20 +80,20 @@ jobs:
 
       - name: Export Windows
         run: |
-          ./godot --headless --export-release "Windows Desktop" builds/SimsWorld.exe 2>&1 || true
+          ./godot --headless --export-release "Windows Desktop" builds/BuildYourHouse.exe 2>&1 || true
           echo "Export done"
           ls -la builds/
 
       - name: Create ZIP
         run: |
           cd builds
-          zip -r ../SimsWorld-Windows.zip .
+          zip -r ../BuildYourHouse-Windows.zip .
           ls -la ..
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: SimsWorld-Windows
+          name: BuildYourHouse-Windows
           path: |
-            builds/SimsWorld.exe
-            SimsWorld-Windows.zip
+            builds/BuildYourHouse.exe
+            BuildYourHouse-Windows.zip

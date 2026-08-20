@@ -223,7 +223,7 @@ func show_update_dialog(current: String, new_ver: String, url: String) -> void:
 	download_url = url
 
 	# Update text
-	desc_label.text = "Доступна новая версия SimsWorld!\nОбновление включает исправления и улучшения."
+	desc_label.text = "Доступна новая версия Build Your House!\nОбновление включает исправления и улучшения."
 	$"Content/VersionInfo".visible = false  # Will be updated via version_box
 
 	# Update version labels (find them in the tree)

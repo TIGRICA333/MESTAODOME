@@ -16,7 +16,7 @@ const GITHUB_API_URL: String = "https://api.github.com/repos/%s/%s/releases/late
 const GITHUB_DOWNLOAD_URL: String = "https://github.com/%s/%s/releases/download/%s/SimsWorld.exe"
 
 # Current game version
-const GAME_VERSION: String = "1.0.0"
+const GAME_VERSION: String = "1.1.0"
 
 # Update state
 var latest_version: String = ""

@@ -114,10 +114,10 @@ func _on_update_check_failed(error: String) -> void:
 	print("[Updater] Check failed: ", error)
 
 func _start_game() -> void:
-	print("🌍 Welcome to SimsWorld!")
+	print("🌍 Welcome to Build Your House!")
 	print("🎮 WASD to move, Mouse to look, E to interact, Shift to sprint")
 	print("📋 ESC for menu")
 
 	var ui = get_node_or_null("UI")
 	if ui and ui.has_method("show_message"):
-		ui.show_message("Welcome to SimsWorld! Use WASD to move.")
+		ui.show_message("Welcome to Build Your House!")

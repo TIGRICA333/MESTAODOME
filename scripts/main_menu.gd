@@ -30,14 +30,14 @@ func _setup_ui() -> void:
 
 	# Title
 	var title := Label.new()
-	title.text = "🏡 SimsWorld"
+	title.text = "🏠 Build Your House"
 	title.add_theme_font_size_override("font_size", 48)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Color(1, 0.9, 0.7))
 	main_vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Build • Live • Connect"
+	subtitle.text = "Строй • Живи • Общайся"
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_color_override("font_color", Color(0.6, 0.7, 0.8))
