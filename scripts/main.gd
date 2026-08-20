@@ -14,6 +14,7 @@ func _ready() -> void:
 	# Create child nodes that don't exist in scene file
 	_setup_scene_tree()
 	_connect_signals()
+	_setup_updater()
 	_start_game()
 
 func _setup_scene_tree() -> void:
@@ -67,6 +68,31 @@ func _connect_signals() -> void:
 		multiplayer_manager.player_connected.connect(_on_player_connected)
 		multiplayer_manager.player_disconnected.connect(_on_player_disconnected)
 		multiplayer_manager.connection_succeeded.connect(_on_connection_succeeded)
+
+func _setup_updater() -> void:
+	# Create auto-updater
+	var updater := Node.new()
+	updater.name = "AutoUpdater"
+	updater.set_script(load("res://scripts/auto_updater.gd"))
+	add_child(updater)
+
+	# Create update dialog
+	var dialog := CanvasLayer.new()
+	dialog.name = "UpdateDialog"
+	dialog.set_script(load("res://scripts/update_dialog.gd"))
+	add_child(dialog)
+
+	# Connect updater signals
+	updater.update_available.connect(_on_update_available)
+	updater.update_check_failed.connect(_on_update_check_failed)
+
+func _on_update_available(current: String, new_version: String, url: String) -> void:
+	var dialog = get_node_or_null("/root/Main/UpdateDialog")
+	if dialog:
+		dialog.show_update_dialog(current, new_version, url)
+
+func _on_update_check_failed(error: String) -> void:
+	print("[Updater] Check failed: ", error)
 
 func _start_game() -> void:
 	print("🌍 Welcome to SimsWorld!")

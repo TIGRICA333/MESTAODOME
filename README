@@ -9,6 +9,7 @@
 - 👥 See other players online
 - 💰 Earn money, manage needs
 - 🌐 Host or join games
+- 🔄 **Auto-updates** from GitHub Releases
 
 📋 REQUIREMENTS:
 1. Download Godot 4.3+: https://godotengine.org/download
@@ -28,6 +29,26 @@
 - Shift - Sprint
 - ESC - Menu
 
+🔄 AUTO-UPDATES:
+When a new version is released on GitHub, the game automatically checks
+for updates on startup and shows a dialog:
+
+┌─────────────────────────────────┐
+│  🔄 Доступно обновление!       │
+│                                 │
+│  📱 Текущая: v1.0.0            │
+│       →                        │
+│  🆕 Новая: v1.1.0              │
+│                                 │
+│  ✅ Обновить сейчас            │
+│  ⏰ Напомнить позже            │
+│  ❌ Пропустить                  │
+└─────────────────────────────────┘
+
+• Update Now - Downloads and installs automatically
+• Remind Later - Checks again in 10 minutes
+• Skip - Ignores this version
+
 🌐 MULTIPLAYER:
 - HOST: Click "Host Game" - others connect to your IP
 - JOIN: Enter the host's IP and click "Join Game"
@@ -39,8 +60,7 @@
 3. Click "Export Project"
 4. Your .exe is ready!
 
-SERVER (optional):
-  godot --headless --script res://scripts/server.gd
+Automatically built via GitHub Actions on every push to main.
 
 📁 PROJECT STRUCTURE:
   scenes/
@@ -55,4 +75,6 @@ SERVER (optional):
     game_manager.gd - Economy and game state
     multiplayer_manager.gd - Network sync
     world.gd        - World generation
+    auto_updater.gd - Auto-update checker
+    update_dialog.gd - Update prompt UI
     server.gd       - Dedicated server
